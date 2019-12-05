@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace KernelDeeps.IO.MNIST
 {
-	public class MNISTReader : BDReader
+	public class MNISTReader : DataStream
 	{
 		public int Width { get; private set; }
 		public int Height { get; private set; }
@@ -18,7 +18,6 @@ namespace KernelDeeps.IO.MNIST
 		BinaryReader outputsReader;
 
 		public MNISTReader(string inputsFile, string outputsFile)
-			: base(inputsFile, outputsFile)
 		{
 			inputsReader = new BinaryReader(File.OpenRead(inputsFile));
 			outputsReader = new BinaryReader(File.OpenRead(outputsFile));
@@ -45,12 +44,14 @@ namespace KernelDeeps.IO.MNIST
 			outputsReader.Dispose();
 		}
 
-		public override Sample[] ReadNext(int count)
+		public override Sample[] ReadNext(StreamOptions options = default)
 		{
-			Sample[] samples = new Sample[count];
+			options.count = options.count < 1 ? 1 : options.count;
+
+			Sample[] samples = new Sample[options.count];
 			byte[] buffer;
 
-			for (int i = 0; i < count; i++)
+			for (int i = 0; i < options.count; i++)
 			{
 				if (Position == SamplesCount)
 				{
@@ -78,6 +79,9 @@ namespace KernelDeeps.IO.MNIST
 
 				Position++;
 			}
+
+			if (options.shuffle)
+				Shuffle(samples);
 
 			return samples;
 		}
